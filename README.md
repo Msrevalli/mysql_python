@@ -833,3 +833,278 @@ Yes, both **indexes** and **constraints** can be used together:
 Both work together to ensure a well-performing, consistent database.
 
 
+### **🔹 What are Views in SQL?**
+
+A **view** in SQL is a virtual table that consists of a **stored query**. It doesn't store the data itself but instead presents data from one or more tables in a specific way. Views are used to simplify complex queries, encapsulate business logic, and enhance security by restricting access to specific columns or rows of data.
+
+### **🔹 Key Points about Views:**
+- **Virtual Table**: A view is not physically stored (except for materialized views in some databases) and doesn't occupy space. It’s a virtual table created by a `SELECT` query.
+- **Read-Only or Updatable**: Views can be **read-only** or **updatable** (if certain conditions are met, like no joins or aggregations).
+- **Security**: You can use views to restrict user access to specific data by providing a controlled interface to the underlying tables.
+- **Simplicity**: Views simplify complex queries by encapsulating them in a named structure.
+  
+---
+
+### **🔹 Creating and Using Views:**
+
+1. **Create a View**:
+
+```sql
+CREATE VIEW view_name AS
+SELECT column1, column2, ...
+FROM table_name
+WHERE condition;
+```
+
+Example:
+
+```sql
+CREATE VIEW employee_sales AS
+SELECT name, department, salary
+FROM employees
+WHERE department = 'Sales';
+```
+
+This creates a view named `employee_sales` that only shows employees working in the "Sales" department.
+
+2. **Selecting Data from a View**:
+
+You can query a view just like a table:
+
+```sql
+SELECT * FROM employee_sales;
+```
+
+This will show the employees working in the "Sales" department.
+
+3. **Updating Data in a View**:
+
+Some views are **updatable**, meaning you can use `INSERT`, `UPDATE`, or `DELETE` operations on them. This depends on the complexity of the view (e.g., whether it involves joins, aggregation, etc.).
+
+For simple views:
+
+```sql
+UPDATE employee_sales
+SET salary = 50000
+WHERE name = 'John Doe';
+```
+
+4. **Dropping a View**:
+
+If you no longer need a view, you can drop it:
+
+```sql
+DROP VIEW employee_sales;
+```
+
+---
+
+### **🔹 Types of Views:**
+
+1. **Simple View**:
+   - Based on a single table.
+   - Can be **updatable** (with some restrictions).
+   
+   Example:
+   ```sql
+   CREATE VIEW simple_view AS
+   SELECT name, age FROM employees;
+   ```
+
+2. **Complex View**:
+   - Involves multiple tables (through `JOIN` or subqueries).
+   - May not always be **updatable** because of the complexity of the operations involved.
+
+   Example:
+   ```sql
+   CREATE VIEW complex_view AS
+   SELECT employees.name, orders.order_id
+   FROM employees
+   JOIN orders ON employees.id = orders.employee_id;
+   ```
+
+3. **Materialized View**:
+   - A **physical** version of a view (used in some databases like PostgreSQL).
+   - Stores the result of the query to improve performance, especially for large datasets, but needs to be refreshed when the underlying data changes.
+   
+   Example:
+   ```sql
+   CREATE MATERIALIZED VIEW mat_view AS
+   SELECT * FROM sales_data WHERE sales_date > '2024-01-01';
+   ```
+
+   You can refresh the data in the materialized view:
+   ```sql
+   REFRESH MATERIALIZED VIEW mat_view;
+   ```
+
+---
+
+### **🔹 Advantages of Using Views:**
+
+- **Simplify Complex Queries**: You can write complex queries once and refer to them as views, saving time and effort in repetitive querying.
+- **Data Security**: Views can restrict user access to only specific columns or rows.
+- **Encapsulation**: You can hide the complexity of the underlying database schema and present a simplified view of the data.
+- **Consistency**: If the underlying tables change (e.g., schema changes), as long as the view logic remains intact, the applications using the view won't be affected.
+  
+---
+
+### **🔹 Example:**
+
+Let’s say we have two tables:
+
+- `employees(id, name, department)`
+- `sales(employee_id, sales_amount)`
+
+We want to create a view that shows the total sales by each employee:
+
+```sql
+CREATE VIEW employee_sales AS
+SELECT employees.name, SUM(sales.sales_amount) AS total_sales
+FROM employees
+JOIN sales ON employees.id = sales.employee_id
+GROUP BY employees.name;
+```
+
+Now, querying the view:
+
+```sql
+SELECT * FROM employee_sales;
+```
+
+This will return the name and total sales for each employee.
+
+---
+
+### **🔹 Conclusion:**
+
+- Views are powerful for presenting data in a simplified and controlled manner.
+- They improve security, maintainability, and query management.
+- Use views to **simplify** queries, **encapsulate** logic, and **restrict access** to sensitive data.
+
+Certainly! Below is a Python script that demonstrates how to create, query, and drop SQL views using **MySQL** and **Python**. This script also includes examples of handling views based on complex queries.
+
+### **Steps:**
+1. **Establish a connection** to MySQL using `mysql.connector`.
+2. **Create a view** that combines data from multiple tables.
+3. **Query the view** to retrieve the data.
+4. **Drop the view** once it's no longer needed.
+
+### **Python Script for SQL Views:**
+
+```python
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user=os.getenv("MYSQL_USER"),  # MySQL username from .env
+    password=os.getenv("MYSQL_PASSWORD"),  # MySQL password from .env
+    database="Database1"    # The database you're using
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# 1. Create a Sample Table (if not already created)
+create_employee_table = """
+CREATE TABLE IF NOT EXISTS employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    department VARCHAR(100)
+)
+"""
+create_sales_table = """
+CREATE TABLE IF NOT EXISTS sales (
+    employee_id INT,
+    sales_amount DECIMAL(10, 2),
+    FOREIGN KEY (employee_id) REFERENCES employees(id)
+)
+"""
+cursor.execute(create_employee_table)
+cursor.execute(create_sales_table)
+
+# 2. Insert Sample Data into Tables
+insert_employee_data = """
+INSERT INTO employees (name, department) VALUES (%s, %s)
+"""
+employee_data = [
+    ("John Doe", "Sales"),
+    ("Jane Smith", "Marketing"),
+    ("Emily Johnson", "Sales")
+]
+cursor.executemany(insert_employee_data, employee_data)
+
+insert_sales_data = """
+INSERT INTO sales (employee_id, sales_amount) VALUES (%s, %s)
+"""
+sales_data = [
+    (1, 1500.50),  # John Doe's sales
+    (2, 3000.00),  # Jane Smith's sales
+    (3, 1200.75)   # Emily Johnson's sales
+]
+cursor.executemany(insert_sales_data, sales_data)
+
+# Commit the changes
+conn.commit()
+
+# 3. Create a View (Virtual Table)
+create_view_query = """
+CREATE VIEW employee_sales AS
+SELECT employees.name, employees.department, SUM(sales.sales_amount) AS total_sales
+FROM employees
+JOIN sales ON employees.id = sales.employee_id
+GROUP BY employees.name, employees.department;
+"""
+cursor.execute(create_view_query)
+conn.commit()
+
+print("View 'employee_sales' created successfully.")
+
+# 4. Query the View
+print("\nQuerying the 'employee_sales' view:")
+cursor.execute("SELECT * FROM employee_sales")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# 5. Drop the View
+cursor.execute("DROP VIEW IF EXISTS employee_sales")
+conn.commit()
+
+print("\nView 'employee_sales' dropped successfully.")
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+
+print("Operations completed successfully.")
+```
+
+### **Explanation of the Python Script:**
+
+1. **Establishing the Connection**:
+   - The script establishes a connection to the MySQL database using `mysql.connector.connect()`. The connection details are fetched from environment variables (using `dotenv`).
+
+2. **Creating Tables**:
+   - The script creates two tables: `employees` and `sales`. The `employees` table stores employee details, and the `sales` table stores the sales records for each employee.
+
+3. **Inserting Data**:
+   - Sample data is inserted into the `employees` and `sales` tables.
+
+4. **Creating the View**:
+   - A view `employee_sales` is created by joining the `employees` and `sales` tables. This view calculates the total sales for each employee.
+
+5. **Querying the View**:
+   - The script executes a `SELECT` query on the `employee_sales` view to fetch the employee names, departments, and total sales.
+
+6. **Dropping the View**:
+   - The view is dropped using the `DROP VIEW` statement.
+
+---
+
