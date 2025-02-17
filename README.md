@@ -316,3 +316,142 @@ After performing these operations, the `SELECT * FROM employees` statement will 
 - Always make sure you back up your data before performing destructive operations like `DELETE` or `DROP COLUMN`.
 - Altering the column structure, such as modifying or dropping columns, will permanently affect the table.
 
+### **SQL Constraints in MySQL**
+SQL constraints ensure the integrity and accuracy of data in a database. Below are the **common SQL constraints** and how to use them in MySQL.
+
+---
+
+### **1. NOT NULL Constraint**
+Ensures that a column cannot store `NULL` values.
+
+```sql
+CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,  -- Name cannot be NULL
+    age INT NOT NULL,            -- Age cannot be NULL
+    department VARCHAR(100)
+);
+```
+
+---
+
+### **2. UNIQUE Constraint**
+Ensures that all values in a column are **unique**.
+
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE,  -- Each email must be unique
+    username VARCHAR(100) UNIQUE
+);
+```
+
+---
+
+### **3. PRIMARY KEY Constraint**
+- Ensures each row has a **unique identifier**.
+- **Combines** `UNIQUE` and `NOT NULL` constraints.
+
+```sql
+CREATE TABLE students (
+    student_id INT AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    PRIMARY KEY (student_id)  -- student_id is unique & cannot be NULL
+);
+```
+
+---
+
+### **4. FOREIGN KEY Constraint**
+Ensures **referential integrity** between two tables.
+
+```sql
+CREATE TABLE orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)  -- References another table
+);
+```
+
+---
+
+### **5. CHECK Constraint**  
+Ensures values in a column meet **a specific condition**.
+
+```sql
+CREATE TABLE employees (
+    id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    age INT CHECK (age >= 18)  -- Age must be at least 18
+);
+```
+> 🛑 **Note:** `CHECK` is supported in MySQL 8.0+.
+
+---
+
+### **6. DEFAULT Constraint**
+Assigns a **default value** to a column when no value is specified.
+
+```sql
+CREATE TABLE products (
+    product_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    status VARCHAR(20) DEFAULT 'Available'  -- Default value is 'Available'
+);
+```
+
+---
+
+### **7. AUTO_INCREMENT Constraint**
+Automatically increases the column value **by 1** for each new row.
+
+```sql
+CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
+);
+```
+
+---
+
+### **8. COMPOSITE PRIMARY KEY**  
+A **primary key on multiple columns**.
+
+```sql
+CREATE TABLE enrollments (
+    student_id INT,
+    course_id INT,
+    PRIMARY KEY (student_id, course_id)  -- Composite key
+);
+```
+
+---
+
+### **Example: Applying Multiple Constraints**
+```sql
+CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    age INT CHECK (age >= 18),
+    department VARCHAR(100) DEFAULT 'General',
+    salary DECIMAL(10,2) NOT NULL
+);
+```
+
+---
+
+### **Summary Table**
+| Constraint      | Description |
+|---------------|-------------|
+| `NOT NULL` | Ensures a column **cannot be NULL** |
+| `UNIQUE` | Ensures **unique values** in a column |
+| `PRIMARY KEY` | A unique **identifier** for each row |
+| `FOREIGN KEY` | Links two tables to maintain **referential integrity** |
+| `CHECK` | Restricts values based on a **condition** (MySQL 8.0+) |
+| `DEFAULT` | Assigns a **default value** if none is provided |
+| `AUTO_INCREMENT` | Automatically **increments** a column value |
+| `COMPOSITE KEY` | A primary key using **multiple columns** |
+
+
+
