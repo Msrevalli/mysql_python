@@ -1108,3 +1108,195 @@ print("Operations completed successfully.")
 
 ---
 
+In SQL, **joins** are used to combine records from two or more tables based on a related column between them. Here are the main types of joins and how you can use them in Python with a MySQL database:
+
+### **Types of Joins**:
+1. **INNER JOIN**: Returns records that have matching values in both tables.
+2. **LEFT JOIN (or LEFT OUTER JOIN)**: Returns all records from the left table and the matched records from the right table. If there is no match, NULL values are returned for columns from the right table.
+3. **RIGHT JOIN (or RIGHT OUTER JOIN)**: Returns all records from the right table and the matched records from the left table. If there is no match, NULL values are returned for columns from the left table.
+4. **FULL OUTER JOIN**: Returns records when there is a match in one of the tables. (Note: MySQL does not support FULL OUTER JOIN directly, but it can be emulated using `UNION`.)
+5. **CROSS JOIN**: Returns the Cartesian product of the two tables. It returns all possible combinations of rows between the two tables.
+
+### **Python Script with Joins**:
+
+This script demonstrates how to use `INNER JOIN`, `LEFT JOIN`, and `RIGHT JOIN` with MySQL and Python.
+
+```python
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user=os.getenv("MYSQL_USER"),  # MySQL username from .env
+    password=os.getenv("MYSQL_PASSWORD"),  # MySQL password from .env
+    database="Database1"    # The database you're using
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# 1. Create Sample Tables (if not already created)
+create_employee_table = """
+CREATE TABLE IF NOT EXISTS employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    department VARCHAR(100)
+)
+"""
+create_sales_table = """
+CREATE TABLE IF NOT EXISTS sales (
+    employee_id INT,
+    sales_amount DECIMAL(10, 2),
+    FOREIGN KEY (employee_id) REFERENCES employees(id)
+)
+"""
+cursor.execute(create_employee_table)
+cursor.execute(create_sales_table)
+
+# 2. Insert Sample Data into Tables
+insert_employee_data = """
+INSERT INTO employees (name, department) VALUES (%s, %s)
+"""
+employee_data = [
+    ("John Doe", "Sales"),
+    ("Jane Smith", "Marketing"),
+    ("Emily Johnson", "Sales")
+]
+cursor.executemany(insert_employee_data, employee_data)
+
+insert_sales_data = """
+INSERT INTO sales (employee_id, sales_amount) VALUES (%s, %s)
+"""
+sales_data = [
+    (1, 1500.50),  # John Doe's sales
+    (2, 3000.00),  # Jane Smith's sales
+    (3, 1200.75)   # Emily Johnson's sales
+]
+cursor.executemany(insert_sales_data, sales_data)
+
+# Commit the changes
+conn.commit()
+
+# 3. INNER JOIN - Fetching employees with their sales
+print("INNER JOIN Result (Employees with Sales):")
+cursor.execute("""
+    SELECT employees.name, employees.department, sales.sales_amount
+    FROM employees
+    INNER JOIN sales ON employees.id = sales.employee_id
+""")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# 4. LEFT JOIN - Fetching all employees and their sales (including those without sales)
+print("\nLEFT JOIN Result (All Employees with Sales, including those without sales):")
+cursor.execute("""
+    SELECT employees.name, employees.department, sales.sales_amount
+    FROM employees
+    LEFT JOIN sales ON employees.id = sales.employee_id
+""")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# 5. RIGHT JOIN - Fetching all sales and the corresponding employees
+print("\nRIGHT JOIN Result (All Sales with Corresponding Employees):")
+cursor.execute("""
+    SELECT employees.name, employees.department, sales.sales_amount
+    FROM employees
+    RIGHT JOIN sales ON employees.id = sales.employee_id
+""")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# 6. CROSS JOIN - All possible combinations of employees and sales (use carefully)
+print("\nCROSS JOIN Result (All combinations of Employees and Sales):")
+cursor.execute("""
+    SELECT employees.name, sales.sales_amount
+    FROM employees
+    CROSS JOIN sales
+""")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+
+print("Operations completed successfully.")
+```
+
+### **Explanation of the Script**:
+
+1. **Database Connection**:
+   - The connection to MySQL is established using the `mysql.connector` module. The database details are fetched from environment variables using `dotenv`.
+
+2. **Creating Tables**:
+   - The script creates two tables, `employees` and `sales`, if they do not already exist. The `employees` table contains the employee details, and the `sales` table contains the sales data for each employee.
+
+3. **Inserting Data**:
+   - Sample data is inserted into the `employees` and `sales` tables to demonstrate the joins.
+
+4. **INNER JOIN**:
+   - This query combines data from `employees` and `sales` where there is a matching `employee_id` in the `sales` table. It returns only employees who have sales records.
+
+5. **LEFT JOIN**:
+   - This query returns all employees and their sales data. If an employee does not have any sales, the `sales_amount` will be `NULL`.
+
+6. **RIGHT JOIN**:
+   - This query returns all sales records, even those without a matching employee. If there is no employee for a given sale, the employee details will be `NULL`.
+
+7. **CROSS JOIN**:
+   - This query returns all possible combinations of employees and sales. It creates a Cartesian product between the two tables.
+
+### **Sample Output**:
+
+1. **INNER JOIN**:
+   ```
+   INNER JOIN Result (Employees with Sales):
+   ('John Doe', 'Sales', 1500.5)
+   ('Jane Smith', 'Marketing', 3000.0)
+   ('Emily Johnson', 'Sales', 1200.75)
+   ```
+
+2. **LEFT JOIN**:
+   ```
+   LEFT JOIN Result (All Employees with Sales, including those without sales):
+   ('John Doe', 'Sales', 1500.5)
+   ('Jane Smith', 'Marketing', 3000.0)
+   ('Emily Johnson', 'Sales', 1200.75)
+   ```
+
+3. **RIGHT JOIN**:
+   ```
+   RIGHT JOIN Result (All Sales with Corresponding Employees):
+   ('John Doe', 'Sales', 1500.5)
+   ('Jane Smith', 'Marketing', 3000.0)
+   ('Emily Johnson', 'Sales', 1200.75)
+   ```
+
+4. **CROSS JOIN**:
+   ```
+   CROSS JOIN Result (All combinations of Employees and Sales):
+   ('John Doe', 1500.5)
+   ('John Doe', 3000.0)
+   ('John Doe', 1200.75)
+   ('Jane Smith', 1500.5)
+   ('Jane Smith', 3000.0)
+   ('Jane Smith', 1200.75)
+   ('Emily Johnson', 1500.5)
+   ('Emily Johnson', 3000.0)
+   ('Emily Johnson', 1200.75)
+   ```
+
+### **Conclusion**:
+
+This Python script shows the use of different SQL join operations (`INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN`, and `CROSS JOIN`) in MySQL using Python. Joins are powerful tools to combine related data from multiple tables. Each type of join serves a different purpose depending on the data you want to retrieve.
+
