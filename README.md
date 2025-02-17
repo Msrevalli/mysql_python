@@ -200,4 +200,119 @@ When you run this script:
 - It will insert 3 rows of data.
 - It will then drop the table, so make sure you don't need the table after running the script.
 
+# Here’s a Python script using MySQL to demonstrate how to handle **NULL values**, perform **UPDATE** and **DELETE** operations, and use **ALTER TABLE** commands to modify the structure of an existing table.
+
+
+```python
+import mysql.connector
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user="root",            # Your MySQL username
+    password="password",    # Your MySQL password
+    database="mydatabase"   # The database you're using
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# 1. Handling NULL Values
+# Inserting NULL values into the table (for example, in the "age" column)
+insert_null_query = """
+INSERT INTO employees (name, age, department) 
+VALUES (%s, %s, %s)
+"""
+data_with_null = [
+    ("Alice Green", None, "Marketing")  # Age is set to NULL
+]
+
+cursor.executemany(insert_null_query, data_with_null)
+conn.commit()
+
+# 2. UPDATE Statement
+# Updating data in the table (for example, changing a person's department)
+update_query = """
+UPDATE employees 
+SET department = %s 
+WHERE name = %s
+"""
+cursor.execute(update_query, ("Sales", "John Doe"))
+conn.commit()
+
+# 3. DELETE Statement
+# Deleting data from the table (for example, deleting an employee)
+delete_query = """
+DELETE FROM employees 
+WHERE name = %s
+"""
+cursor.execute(delete_query, ("Alice Green",))
+conn.commit()
+
+# 4. ALTER TABLE - Add Column
+# Adding a new column (for example, adding a "salary" column)
+alter_add_column_query = """
+ALTER TABLE employees 
+ADD COLUMN salary DECIMAL(10, 2)
+"""
+cursor.execute(alter_add_column_query)
+conn.commit()
+
+# 5. ALTER TABLE - Modify/Alter Column
+# Modifying a column (for example, changing the "age" column to allow larger values)
+alter_modify_column_query = """
+ALTER TABLE employees 
+MODIFY COLUMN age INT(11)
+"""
+cursor.execute(alter_modify_column_query)
+conn.commit()
+
+# 6. ALTER TABLE - Drop Column
+# Dropping a column (for example, removing the "salary" column)
+alter_drop_column_query = """
+ALTER TABLE employees 
+DROP COLUMN salary
+"""
+cursor.execute(alter_drop_column_query)
+conn.commit()
+
+# Verify the results
+cursor.execute("SELECT * FROM employees")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+
+print("Operations completed successfully.")
+```
+
+### Explanation of Operations:
+
+1. **Handling NULL Values:**
+   - You can insert `NULL` values into a column by passing `None` in the `data_with_null` list. In this example, the "age" column has a `NULL` value for Alice Green.
+
+2. **UPDATE Statement:**
+   - The `UPDATE` statement changes an existing record in the table. In this case, the department of "John Doe" is changed to "Sales".
+
+3. **DELETE Statement:**
+   - The `DELETE` statement removes a record from the table. In this case, the employee "Alice Green" is deleted.
+
+4. **ALTER TABLE - Add Column:**
+   - The `ALTER TABLE ADD COLUMN` command is used to add a new column. In this case, we add a `salary` column to the `employees` table.
+
+5. **ALTER TABLE - Modify/Alter Column:**
+   - The `ALTER TABLE MODIFY COLUMN` command modifies an existing column. In this case, the `age` column is altered to allow larger integer values.
+
+6. **ALTER TABLE - Drop Column:**
+   - The `ALTER TABLE DROP COLUMN` command removes a column from the table. In this case, the `salary` column is dropped.
+
+### Verification:
+After performing these operations, the `SELECT * FROM employees` statement will retrieve the table's current data, showing any changes made.
+
+### Notes:
+- Always make sure you back up your data before performing destructive operations like `DELETE` or `DROP COLUMN`.
+- Altering the column structure, such as modifying or dropping columns, will permanently affect the table.
 
