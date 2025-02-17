@@ -117,4 +117,87 @@ for db in cursor:
 
 This will print out all the databases, and you can confirm the database you want to drop.
 
+# Here’s a full Python script that demonstrates how to create a table, insert data into the table, and drop the table using MySQL:
+
+### Step 1: Install MySQL Connector
+If you haven’t installed the MySQL connector yet, you can do it using:
+
+```bash
+pip install mysql-connector-python
+```
+
+### Step 2: Python Code to Create Table, Insert Data, and Drop Table
+
+```python
+import mysql.connector
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user="root",            # Your MySQL username
+    password="password",    # Your MySQL password
+    database="mydatabase"   # The database where the table will be created
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# Step 1: Create a table
+create_table_query = """
+CREATE TABLE IF NOT EXISTS employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    age INT,
+    department VARCHAR(100)
+)
+"""
+cursor.execute(create_table_query)
+
+# Step 2: Insert data into the table
+insert_data_query = """
+INSERT INTO employees (name, age, department) 
+VALUES (%s, %s, %s)
+"""
+data = [
+    ("John Doe", 30, "HR"),
+    ("Jane Smith", 25, "Finance"),
+    ("Emily Johnson", 35, "IT")
+]
+
+cursor.executemany(insert_data_query, data)
+
+# Commit the changes to the database
+conn.commit()
+
+# Step 3: Verify data insertion
+cursor.execute("SELECT * FROM employees")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# Step 4: Drop the table
+cursor.execute("DROP TABLE employees")
+
+# Commit the changes to the database
+conn.commit()
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+
+print("Table created, data inserted, and table dropped successfully")
+```
+
+### Explanation:
+1. **Create Table:** The `CREATE TABLE` statement creates a table called `employees` with columns `id`, `name`, `age`, and `department`.
+2. **Insert Data:** The `INSERT INTO` statement is used to insert multiple rows of data into the `employees` table.
+3. **Verify Data:** The `SELECT * FROM employees` query retrieves all rows from the `employees` table, and the results are printed.
+4. **Drop Table:** The `DROP TABLE` statement deletes the table from the database.
+
+### Step 3: Verify the Results
+When you run this script:
+- It will create the `employees` table (if it doesn't exist).
+- It will insert 3 rows of data.
+- It will then drop the table, so make sure you don't need the table after running the script.
+
 
