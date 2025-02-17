@@ -11,8 +11,25 @@ conn = mysql.connector.connect(
     database="Database1"   # The database where the table will be created
 )
 
-# Create a cursor object using the connection
+
+
+# Create a cursor object
 cursor = conn.cursor()
+
+# Step 1: Create a Table
+create_table_query = """
+CREATE TABLE IF NOT EXISTS employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    age INT DEFAULT NULL,
+    department VARCHAR(100),
+    salary DECIMAL(10,2) DEFAULT NULL
+)
+"""
+cursor.execute(create_table_query)
+conn.commit()
+
+print("Table 'employees' created successfully.")
 
 # Step 1: Create a table
 create_table_query = """
