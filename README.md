@@ -1300,3 +1300,239 @@ print("Operations completed successfully.")
 
 This Python script shows the use of different SQL join operations (`INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN`, and `CROSS JOIN`) in MySQL using Python. Joins are powerful tools to combine related data from multiple tables. Each type of join serves a different purpose depending on the data you want to retrieve.
 
+### **Stored Procedures in MySQL**
+
+A **stored procedure** is a set of SQL statements that can be stored and executed in the MySQL database server. Stored procedures allow you to encapsulate logic on the server side, improving performance and maintainability. 
+
+### **Advantages of Stored Procedures**:
+- **Reusability**: Once written, they can be called multiple times without rewriting the same logic.
+- **Performance**: Stored procedures are precompiled, meaning the MySQL engine can optimize execution.
+- **Maintainability**: They help to reduce redundancy and improve the management of your SQL logic.
+
+### **Basic Structure of Stored Procedures**:
+```sql
+DELIMITER $$
+
+CREATE PROCEDURE procedure_name (parameters)
+BEGIN
+    -- SQL statements
+END$$
+
+DELIMITER ;
+```
+
+- **DELIMITER $$**: Changes the delimiter so that you can use `;` within the procedure.
+- **CREATE PROCEDURE**: Used to define the stored procedure.
+- **BEGIN...END**: Encloses the body of the procedure, containing SQL statements.
+- **DELIMITER ;**: Resets the delimiter back to `;` after the procedure is created.
+
+### **Examples**:
+Here are a few examples of creating, calling, and deleting stored procedures with Python and MySQL.
+
+---
+
+### **Python Script for Stored Procedures**
+
+#### Step 1: **Create a Stored Procedure**
+
+```python
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user=os.getenv("MYSQL_USER"),  # MySQL username from .env
+    password=os.getenv("MYSQL_PASSWORD"),  # MySQL password from .env
+    database="Database1"    # The database you're using
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# 1. Creating a stored procedure that adds an employee's details
+create_procedure_query = """
+DELIMITER $$
+
+CREATE PROCEDURE AddEmployee(IN emp_name VARCHAR(100), IN emp_department VARCHAR(100), IN emp_salary DECIMAL(10,2))
+BEGIN
+    INSERT INTO employees (name, department, salary) 
+    VALUES (emp_name, emp_department, emp_salary);
+END$$
+
+DELIMITER ;
+"""
+cursor.execute(create_procedure_query)
+
+print("Stored Procedure 'AddEmployee' created successfully.")
+
+# Commit the changes
+conn.commit()
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+```
+
+#### **Explanation**:
+- This script creates a stored procedure called `AddEmployee`. It takes three input parameters: employee name, department, and salary. The procedure inserts these values into the `employees` table.
+
+---
+
+#### Step 2: **Call the Stored Procedure**
+
+After creating the stored procedure, we can call it from Python as follows:
+
+```python
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user=os.getenv("MYSQL_USER"),  # MySQL username from .env
+    password=os.getenv("MYSQL_PASSWORD"),  # MySQL password from .env
+    database="Database1"    # The database you're using
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# 2. Calling the stored procedure with parameters
+call_procedure_query = """
+CALL AddEmployee('Alice Green', 'HR', 4500.00);
+"""
+cursor.execute(call_procedure_query)
+
+print("Stored Procedure 'AddEmployee' called successfully.")
+
+# Commit the changes
+conn.commit()
+
+# Verify that the employee was added
+cursor.execute("SELECT * FROM employees WHERE name = 'Alice Green'")
+result = cursor.fetchall()
+for row in result:
+    print(row)
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+```
+
+#### **Explanation**:
+- This script calls the `AddEmployee` stored procedure, passing it parameters for `name`, `department`, and `salary`. After calling the procedure, it queries the `employees` table to confirm that the new employee was added.
+
+---
+
+#### Step 3: **Modify a Stored Procedure**
+
+You can modify an existing stored procedure by first dropping it and then recreating it with the updated logic:
+
+```python
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user=os.getenv("MYSQL_USER"),  # MySQL username from .env
+    password=os.getenv("MYSQL_PASSWORD"),  # MySQL password from .env
+    database="Database1"    # The database you're using
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# 3. Drop the old stored procedure (if it exists)
+cursor.execute("DROP PROCEDURE IF EXISTS AddEmployee;")
+
+# 4. Create a new version of the stored procedure with additional functionality
+create_procedure_query = """
+DELIMITER $$
+
+CREATE PROCEDURE AddEmployee(IN emp_name VARCHAR(100), IN emp_department VARCHAR(100), IN emp_salary DECIMAL(10,2), IN emp_age INT)
+BEGIN
+    INSERT INTO employees (name, department, salary, age) 
+    VALUES (emp_name, emp_department, emp_salary, emp_age);
+END$$
+
+DELIMITER ;
+"""
+cursor.execute(create_procedure_query)
+
+print("Stored Procedure 'AddEmployee' modified successfully.")
+
+# Commit the changes
+conn.commit()
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+```
+
+#### **Explanation**:
+- This script first drops the existing stored procedure (if it exists) using `DROP PROCEDURE IF EXISTS`.
+- Then, it recreates the `AddEmployee` procedure, but with an additional parameter (`emp_age`) to store employee age as well.
+
+---
+
+#### Step 4: **Drop a Stored Procedure**
+
+To drop a stored procedure, you can execute a `DROP PROCEDURE` statement like this:
+
+```python
+import mysql.connector
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Establish a connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",       # Your MySQL server
+    user=os.getenv("MYSQL_USER"),  # MySQL username from .env
+    password=os.getenv("MYSQL_PASSWORD"),  # MySQL password from .env
+    database="Database1"    # The database you're using
+)
+
+# Create a cursor object using the connection
+cursor = conn.cursor()
+
+# 5. Drop the stored procedure
+cursor.execute("DROP PROCEDURE IF EXISTS AddEmployee;")
+
+print("Stored Procedure 'AddEmployee' dropped successfully.")
+
+# Commit the changes
+conn.commit()
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+```
+
+#### **Explanation**:
+- This script drops the `AddEmployee` stored procedure from the database using `DROP PROCEDURE IF EXISTS`. 
+
+---
+
+### **Conclusion**:
+
+- **Creating Stored Procedures**: Stored procedures allow you to group SQL statements and execute them efficiently. 
+- **Calling Procedures**: Once a procedure is created, you can call it using `CALL` and pass parameters.
+- **Modifying and Deleting**: You can modify procedures by dropping and recreating them. To remove a procedure, simply drop it.
+
