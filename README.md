@@ -564,10 +564,272 @@ cursor.close()
 conn.close()
 ```
 
--### **🚀 Conclusion**
+
 ✅ **Indexes improve query speed significantly**  
 ✅ **Using the right indexes reduces database load**  
 ✅ **Indexes should be used wisely (avoid over-indexing)**  
 
+### **🔹 Next Steps for MySQL Indexes with Python:**
+1. **Add FULLTEXT Indexes**: These indexes improve performance for text-based searches.
+2. **Try COMPOSITE INDEX**: This type of index helps when you query on multiple columns.
+3. **Analyze Performance Using `EXPLAIN ANALYZE`**: This will allow you to see how MySQL executes the queries with and without indexes.
+
+Let’s modify the Python script to include these steps:
+
+---
+
+### **🔹 1️⃣ Add FULLTEXT Index for Text-Based Search**
+The **FULLTEXT index** is used for **text-based searching** on `TEXT` or `VARCHAR` columns. You can use it with `MATCH` and `AGAINST` queries.
+
+### **🔹 2️⃣ Add a COMPOSITE INDEX**
+A **COMPOSITE INDEX** is an index on **multiple columns**. It's useful when you query multiple columns frequently in combination.
+
+### **🔹 3️⃣ Analyze Performance Using `EXPLAIN ANALYZE`**
+The `EXPLAIN` statement shows how MySQL executes a query. Using `EXPLAIN ANALYZE` will give insight into the execution plan and performance details.
+
+---
+
+## **🔹 Full Python Script (with FullText, Composite Index, and EXPLAIN)**
+
+```python
+import mysql.connector
+import os
+from dotenv import load_dotenv
+import time
+
+# Load environment variables (if using .env file)
+load_dotenv()
+
+# Establish connection to MySQL
+conn = mysql.connector.connect(
+    host="localhost",
+    user=os.getenv("MYSQL_USER"),  # Replace with your MySQL username
+    password=os.getenv("MYSQL_PASSWORD"),  # Replace with your MySQL password
+    database="test_db"
+)
+cursor = conn.cursor()
+
+# Step 1: Create Table with Indexes
+create_table_query = """
+CREATE TABLE IF NOT EXISTS employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,  -- Primary Key (Auto-indexed)
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE,          -- Unique Index
+    age INT,
+    department VARCHAR(100),
+    salary DECIMAL(10,2),
+    description TEXT,                  -- For FULLTEXT index
+    INDEX idx_age_salary (age, salary) -- Composite Index on 'age' and 'salary'
+)
+"""
+cursor.execute(create_table_query)
+print("✅ Table 'employees' created successfully.")
+
+# Step 2: Insert Sample Data
+insert_query = """
+INSERT INTO employees (name, email, age, department, salary, description)
+VALUES (%s, %s, %s, %s, %s, %s)
+"""
+data = [
+    ("Alice Johnson", "alice@example.com", 30, "IT", 60000, "Alice is a software engineer."),
+    ("Bob Smith", "bob@example.com", 40, "HR", 55000, "Bob manages HR operations."),
+    ("Charlie Brown", "charlie@example.com", 35, "Finance", 75000, "Charlie is a financial analyst."),
+    ("David White", "david@example.com", 28, "Marketing", 48000, "David leads the marketing team.")
+]
+
+cursor.executemany(insert_query, data)
+conn.commit()
+print("✅ Sample data inserted.")
+
+# Step 3: Create FULLTEXT Index on 'description' column
+create_fulltext_index_query = "CREATE FULLTEXT INDEX idx_fulltext_description ON employees(description)"
+cursor.execute(create_fulltext_index_query)
+print("✅ FULLTEXT Index 'idx_fulltext_description' created on 'description' column.")
+
+# Step 4: Measure Query Performance Before and After Index
+search_query = "SELECT * FROM employees WHERE description LIKE '%engineer%'"
+
+# Without FULLTEXT Index
+cursor.execute("DROP INDEX idx_fulltext_description ON employees")  # Remove FULLTEXT Index
+conn.commit()
+start_time = time.time()
+cursor.execute(search_query)
+result = cursor.fetchall()
+end_time = time.time()
+print(f"⏳ Query without FULLTEXT index took: {end_time - start_time:.5f} seconds")
+
+# With FULLTEXT Index
+cursor.execute(create_fulltext_index_query)  # Re-create FULLTEXT Index
+conn.commit()
+start_time = time.time()
+cursor.execute(search_query)
+result = cursor.fetchall()
+end_time = time.time()
+print(f"🚀 Query with FULLTEXT index took: {end_time - start_time:.5f} seconds")
+
+# Step 5: Using COMPOSITE INDEX on 'age' and 'salary' columns
+search_composite_query = "SELECT * FROM employees WHERE age > 30 AND salary > 50000"
+
+# Using EXPLAIN ANALYZE to analyze performance of the query
+explain_query = f"EXPLAIN ANALYZE {search_composite_query}"
+cursor.execute(explain_query)
+explain_result = cursor.fetchall()
+print("📊 EXPLAIN ANALYZE output for the composite index query:")
+for row in explain_result:
+    print(row)
+
+# Step 6: Drop Indexes
+cursor.execute("DROP INDEX idx_fulltext_description ON employees")  # Drop FULLTEXT index
+cursor.execute("DROP INDEX idx_age_salary ON employees")  # Drop Composite index
+conn.commit()
+print("✅ Indexes dropped.")
+
+# Close the connection
+cursor.close()
+conn.close()
+```
+
+---
+
+## **🔹 4️⃣ Explanation of New Features**
+
+### **1️⃣ FULLTEXT Index**
+- The script adds a **FULLTEXT index** on the `description` column to allow fast searches on text-based content.
+- **Query**: We use a `LIKE` query to search for the word `"engineer"` in the `description` column.
+
+```python
+create_fulltext_index_query = "CREATE FULLTEXT INDEX idx_fulltext_description ON employees(description)"
+cursor.execute(create_fulltext_index_query)
+```
+
+- **Performance Test**: We check the speed of the search query before and after creating the FULLTEXT index.
+
+```python
+search_query = "SELECT * FROM employees WHERE description LIKE '%engineer%'"
+```
+
+### **2️⃣ COMPOSITE Index**
+- A **COMPOSITE index** is created on the `age` and `salary` columns. This index helps when queries filter on both columns simultaneously.
+- **Query**: We search for employees older than 30 with a salary above 50,000.
+
+```python
+create_composite_index_query = "CREATE INDEX idx_age_salary ON employees(age, salary)"
+cursor.execute(create_composite_index_query)
+```
+
+- **Performance Analysis**: We analyze the query performance using `EXPLAIN ANALYZE`.
+
+```python
+explain_query = f"EXPLAIN ANALYZE {search_composite_query}"
+cursor.execute(explain_query)
+explain_result = cursor.fetchall()
+```
+
+### **3️⃣ EXPLAIN ANALYZE**
+- `EXPLAIN ANALYZE` provides detailed insights into how MySQL plans to execute a query and the time spent at each step.
+- This is used to check the **effectiveness of indexes** and analyze **query performance**.
+
+```python
+explain_query = f"EXPLAIN ANALYZE {search_composite_query}"
+cursor.execute(explain_query)
+```
+
+---
+
+## **🔹 5️⃣ Key Points to Remember**
+- **FULLTEXT** indexes are specifically used for **text search** optimization.
+- **COMPOSITE** indexes are beneficial when **multiple columns** are involved in queries.
+- Use **EXPLAIN ANALYZE** to analyze **performance** and verify the **efficiency** of indexes.
+- Always evaluate the **cost of maintaining indexes**. While they improve query performance, they can slow down **insert**, **update**, and **delete** operations.
+
+### **🔹 Differences Between Indexes and Constraints**
+
+Both **Indexes** and **Constraints** are important concepts in database management, but they serve different purposes. Here's a breakdown of their differences:
+
+---
+
+### **1️⃣ Purpose:**
+
+- **Indexes**:
+  - **Optimization**: Indexes are primarily used for **optimizing the performance** of queries (especially `SELECT` queries). They speed up data retrieval by creating an internal data structure (usually a B-tree) that allows faster searches.
+  - **Search Speed**: When you search, sort, or filter by a column, the index helps the database find records more quickly.
+
+- **Constraints**:
+  - **Data Integrity**: Constraints are rules applied to the data to enforce **data integrity** and maintain consistency within the database. They ensure that the data stored in the database follows certain conditions.
+  - **Enforce Rules**: Constraints help enforce rules like uniqueness, referential integrity, and the presence of required data.
+
+---
+
+### **2️⃣ Functionality:**
+
+- **Indexes**:
+  - **Improved Query Performance**: They speed up `SELECT` queries and certain types of operations like `JOIN` and `ORDER BY`.
+  - **No Impact on Data Integrity**: They don't affect how data is entered or modified.
+  - **Cannot Enforce Rules**: They do not enforce business rules or relationships between data in different tables.
+
+- **Constraints**:
+  - **Ensure Correct Data**: Constraints enforce rules like `NOT NULL`, `UNIQUE`, `PRIMARY KEY`, `FOREIGN KEY`, and `CHECK`, making sure that the data meets certain conditions.
+  - **Integrity Enforcement**: They ensure that relationships between tables are respected and that the data in the database remains consistent.
+
+---
+
+### **3️⃣ Types:**
+
+- **Indexes**:
+  - **Primary Index**: Automatically created when you define a `PRIMARY KEY`.
+  - **Unique Index**: Automatically created when you define a `UNIQUE` constraint.
+  - **Composite Index**: Created on multiple columns for performance optimization.
+  - **Full-text Index**: Used for text-based searching.
+  - **Clustered Index**: A table can have only one clustered index, which determines the physical order of rows in the table.
+
+- **Constraints**:
+  - **PRIMARY KEY**: Ensures the uniqueness of records and prevents `NULL` values in a column.
+  - **UNIQUE**: Ensures that all values in a column (or group of columns) are unique.
+  - **FOREIGN KEY**: Maintains referential integrity by ensuring that values in a column correspond to values in another table.
+  - **CHECK**: Ensures that all values in a column satisfy a given condition.
+  - **NOT NULL**: Ensures that a column cannot contain `NULL` values.
+
+---
+
+### **4️⃣ Impact on Performance:**
+
+- **Indexes**:
+  - **Improves Search Speed**: Helps speed up `SELECT` operations, especially on large datasets.
+  - **Overhead on Write Operations**: Indexes can slow down `INSERT`, `UPDATE`, and `DELETE` operations since the index must also be updated.
+  - **Increased Storage**: Indexes take up additional storage space in the database.
+
+- **Constraints**:
+  - **Minimal Performance Impact**: Constraints have a small performance overhead, mainly on `INSERT` and `UPDATE` operations, as the database needs to check whether the constraints are satisfied.
+  - **Data Integrity vs. Speed**: Constraints prioritize data integrity over performance. They may slow down `INSERT` and `UPDATE` operations slightly, but they ensure valid data.
+
+---
+
+### **5️⃣ Can They Be Combined?**
+
+Yes, both **indexes** and **constraints** can be used together:
+
+- A **primary key** constraint automatically creates a **unique index** on the primary key column.
+- A **foreign key constraint** can be used with indexed columns for better performance during `JOIN` operations.
+- Adding **indexes** on columns that are frequently used in queries can improve the overall query performance, even if those columns are also subject to constraints.
+
+---
+
+### **🔹 Summary Table**
+
+| Aspect                | **Indexes**                                      | **Constraints**                                      |
+|-----------------------|--------------------------------------------------|-----------------------------------------------------|
+| **Purpose**           | Speed up data retrieval                         | Enforce data integrity and relationships            |
+| **Function**          | Improve query performance                       | Enforce data validity rules                         |
+| **Types**             | Unique, Composite, Full-text, Clustered, etc.    | Primary Key, Foreign Key, Unique, Not Null, etc.    |
+| **Impact on Performance** | Speeds up `SELECT`, but slows down `INSERT`, `UPDATE`, `DELETE` | Minimal impact on `INSERT`, `UPDATE`, and `DELETE`   |
+| **Storage**           | Uses additional storage for index structures    | Uses minimal storage unless explicitly defined       |
+| **Examples**          | Index on `email` column for fast search         | `PRIMARY KEY` on `id`, `FOREIGN KEY` between tables |
+
+---
+
+### **Conclusion:**
+- **Indexes** are mainly for improving query performance.
+- **Constraints** are used to enforce rules on your data to maintain its integrity.
+Both work together to ensure a well-performing, consistent database.
 
 
